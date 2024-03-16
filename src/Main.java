@@ -132,7 +132,7 @@ public class Main {
 		frame.revalidate();
 		
 		
-		Timer timer = new Timer(5, new ActionListener() {
+		new Timer(5, new ActionListener() {
 			private int x1 = x;
 			private int y = bulletY;
 			private Rectangle rec = bullet.getBounds();
@@ -170,9 +170,8 @@ public class Main {
 				
 			}
 			
-		});
+		}).start();;
 		
-		timer.start();
 	}
 	
 	private void fireAlien() {
