@@ -13,6 +13,7 @@ import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.io.File;
 import java.io.InputStream;
+import java.util.ArrayList;
 import java.util.Random;
 import java.awt.Font;
 import java.awt.GraphicsEnvironment;
@@ -24,14 +25,17 @@ public class Main {
 	private int x = 287;
 	private int y = 625;
 	private int bulletY = 600;
-	private JLabel[] aliens;
-	private Rectangle[] aliensRec = new Rectangle[24];
+	private ArrayList<JLabel> aliens;
+	private ArrayList<Rectangle> aliensRec = new ArrayList<>();
 	private Rectangle playerRec;
 	private JLabel scoreLabel;
 	private int lifes = 3;
 	private JLabel lifeLabel1;
 	private JLabel lifeLabel2;
 	private JLabel lifeLabel3;
+	private Thread right;
+	private volatile boolean running = true;
+	private boolean firstStep = false;
 
 	/**
 	 * Launch the application.
@@ -75,8 +79,8 @@ public class Main {
 		fireAlien();
 		lifes();
 		
-		for(int i = 0;i < aliens.length;i++) {
-			aliensRec[i] = aliens[i].getBounds();
+		for(int i = 0;i < aliens.size();i++) {
+			aliensRec.add(aliens.get(i).getBounds());
 		}
 		
 		frame.addKeyListener(new KeyAdapter() {
@@ -132,6 +136,7 @@ public class Main {
 		frame.revalidate();
 		
 		
+		
 		new Timer(5, new ActionListener() {
 			private int x1 = x;
 			private int y = bulletY;
@@ -155,12 +160,14 @@ public class Main {
 					frame.revalidate();
 				}
 				
-				for(int i = 0;i < aliensRec.length;i++) {
-					if(aliensRec[i].intersects(rec)) {
+				for(int i = 0;i < aliensRec.size();i++) {
+					if(aliensRec.get(i).intersects(rec)) {
 						System.out.print(5);
-						frame.getContentPane().remove(aliens[i]);
+						frame.getContentPane().remove(aliens.get(i));
+						aliens.remove(aliens.get(i));
+						System.out.println(aliens.size());
 						y = 0;
-						aliensRec[i] = new Rectangle();
+						aliensRec.remove(aliensRec.get(i));
 						score += 10;
 						scoreLabel.setText("SCORE: " + score);
 						frame.repaint();
@@ -170,7 +177,7 @@ public class Main {
 				
 			}
 			
-		}).start();;
+		}).start(); ;
 		
 	}
 	
@@ -178,26 +185,62 @@ public class Main {
 		new Thread(() -> {
 			while (true) {
 				try {
-					Thread.sleep(1500);
+					Thread.sleep(1000);
 				} catch (InterruptedException e) {
 					e.printStackTrace();
 				}
-				int r = new Random().nextInt(6);
+				int r = new Random().nextInt(aliens.size());
 				JLabel bullet = new JLabel("");
 				bullet.setBackground(Color.YELLOW);
 				bullet.setOpaque(true);
-				bullet.setBounds(aliens[r].getX() + 27, aliens[r].getY() + 50, 10, 12);
+				bullet.setBounds(aliens.get(r).getX() + 27, aliens.get(r).getY() + 50, 10, 12);
 				frame.getContentPane().add(bullet);
 				frame.repaint();
 				frame.revalidate();
+				if(running ) {
+					alienMoveRight();
+					new Thread(() -> {
+						if (firstStep) {
+							try {
+								Thread.sleep(10000);
+							} catch (InterruptedException e) {
+								e.printStackTrace();
+							}
+						} else {
+							try {
+								Thread.sleep(6000);
+							} catch (InterruptedException e) {
+								e.printStackTrace();
+							}
+							
+						}
+						running = false;
+					}).start();
+					
+				}else {
+					alienMoveLeft();
+					new Thread(()->{
+						
+						try {
+							Thread.sleep(10000);
+						} catch (InterruptedException e) {
+							e.printStackTrace();
+						}
+						running = true;
+						firstStep = true;
+					}).start();
+				}
+				
+				
 				
 				new Timer(5, new ActionListener() {
-					private int x = aliens[r].getX() + 27;
-					private int y = aliens[r].getY() + 50;
+					private int x = aliens.get(r).getX() + 27;
+					private int y = aliens.get(r).getY() + 50;
 					private Rectangle rec = bullet.getBounds();
 					
 					@Override
 					public void actionPerformed(ActionEvent e) {
+						
 						
 						if(y == 640) {
 							((Timer) e.getSource()).stop();
@@ -250,7 +293,7 @@ public class Main {
 			
 	}
 	
-	private JLabel[] aliensSpawn() {
+	private ArrayList<JLabel> aliensSpawn() {
 		JLabel alien_1 = new JLabel("");
 		alien_1.setIcon(new ImageIcon("res/alien.png"));
 		alien_1.setBounds(90, 159, 60, 60);
@@ -371,10 +414,16 @@ public class Main {
 		alien_24.setBounds(437, 346, 60, 60);
 		frame.getContentPane().add(alien_24);
 		
-		JLabel[] aliens = {alien_1,alien_2,alien_3,alien_4,alien_5,alien_6
+		ArrayList<JLabel> aliens = new ArrayList<>();
+		
+		JLabel[] aliensArray = {alien_1,alien_2,alien_3,alien_4,alien_5,alien_6
 							,alien_7,alien_8,alien_9,alien_10,alien_11,alien_12
 							,alien_13,alien_14,alien_15,alien_16,alien_17,alien_18
 							,alien_19,alien_20,alien_21,alien_22,alien_23,alien_24};
+		
+		for(JLabel alien : aliensArray) {
+			aliens.add(alien);
+		}
 		
 		return aliens;
 	}
@@ -414,6 +463,34 @@ public class Main {
 		lifeLabel3.setIcon(new ImageIcon("res\\lifes.png"));
 		lifeLabel3.setBounds(397, 11, 71, 60);
 		frame.getContentPane().add(lifeLabel3);
+	}
+	
+	private void alienMoveRight() {
+		right = new Thread(()->{
+			for(int i = aliens.size()-1;i >= 0;i--){
+				int x = aliens.get(i).getX() + 20;
+				if(x > 564) {
+					break;
+				}
+				aliens.get(i).setBounds(x, aliens.get(i).getY(), aliens.get(i).getWidth(), aliens.get(i).getHeight());
+				aliensRec.get(i).setBounds(aliens.get(i).getBounds());
+			}
+			
+		});
+		right.start();
+	}
+	
+	private void alienMoveLeft() {
+		new Thread(()->{
+			for(int i = 0;i < aliens.size();i++){
+				int x = aliens.get(i).getX() - 20;
+				if(x < 4) {
+					break;
+				}
+				aliens.get(i).setBounds(x, aliens.get(i).getY(), aliens.get(i).getWidth(), aliens.get(i).getHeight());
+				aliensRec.get(i).setBounds(aliens.get(i).getBounds());
+			}
+		}).start();
 	}
 	
 }
