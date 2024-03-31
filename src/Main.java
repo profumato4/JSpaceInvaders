@@ -2,6 +2,8 @@ import java.awt.EventQueue;
 import java.awt.Rectangle;
 
 import javax.swing.JFrame;
+
+import java.awt.BorderLayout;
 import java.awt.Color;
 import javax.swing.JLabel;
 import javax.swing.Timer;
@@ -36,6 +38,10 @@ public class Main {
 	private Thread right;
 	private volatile boolean running = true;
 	private boolean firstStep = false;
+	private Font arcadeFont;
+	private GameOver gameOver;
+	private boolean alive = true;
+	private Main main = this;
 
 	/**
 	 * Launch the application.
@@ -87,17 +93,17 @@ public class Main {
 			@Override
 			public void keyPressed(KeyEvent e) {
 				int keyCode = e.getKeyCode();
-				if(keyCode == KeyEvent.VK_RIGHT) {
+				if(keyCode == KeyEvent.VK_RIGHT && alive) {
 					moveRight(player);
 					playerRec = player.getBounds();
 				}
 				
-				if(keyCode == KeyEvent.VK_LEFT) {
+				if(keyCode == KeyEvent.VK_LEFT && alive) {
 					moveLeft(player);
 					playerRec = player.getBounds();
 				}
 				
-				if(keyCode == KeyEvent.VK_SPACE) {
+				if(keyCode == KeyEvent.VK_SPACE && alive) {
 					firePlayer();
 				}
 				
@@ -183,7 +189,7 @@ public class Main {
 	
 	private void fireAlien() {
 		new Thread(() -> {
-			while (true) {
+			while (alive) {
 				try {
 					Thread.sleep(1000);
 				} catch (InterruptedException e) {
@@ -273,7 +279,13 @@ public class Main {
 									break;
 								
 								case 0:
-									System.out.println("hai perso");
+									alive = false;
+									gameOver = new GameOver(arcadeFont, main);
+									frame.add(gameOver, BorderLayout.CENTER);
+									frame.setComponentZOrder(gameOver, 0);
+									frame.repaint();
+									frame.revalidate();
+									((Timer) e.getSource()).stop();
 									
 							}
 							lifes--;
@@ -430,7 +442,7 @@ public class Main {
 	
 	private void score() {
 		File file = new File("res/font/arcadeFont.ttf");
-		Font arcadeFont = null;
+		arcadeFont = null;
 		try {
 			System.out.println(file);
 			arcadeFont = Font.createFont(Font.TRUETYPE_FONT, file).deriveFont(Font.PLAIN, 30);
@@ -491,6 +503,10 @@ public class Main {
 				aliensRec.get(i).setBounds(aliens.get(i).getBounds());
 			}
 		}).start();
+	}
+	
+	public JFrame getFrame() {
+		return frame;
 	}
 	
 }
