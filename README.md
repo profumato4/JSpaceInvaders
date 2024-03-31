@@ -43,7 +43,7 @@ Or, if you prefer, you can use the pre-built JAR file included in the repository
 3. Achieve the highest score possible by destroying as many aliens as you can while avoiding their projectiles.
 
 # License
-This software is licensed under the MIT license. See the [LICENSE](https://github.com/profumato4/JSpaceInvaders/blob/master/LICENSE.md)for more information.
+This software is licensed under the MIT license. See the [LICENSE](https://github.com/profumato4/JSpaceInvaders/blob/master/LICENSE.md) for more information.
 
 
 # Question or Issues?
